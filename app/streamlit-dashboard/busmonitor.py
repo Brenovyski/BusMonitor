@@ -71,13 +71,12 @@ except:
     bus_stops_df = pd.read_csv('app/streamlit-dashboard/stops.csv', header=None)
 bus_stops = [(row[3], row[4], row[1]) for index, row in bus_stops_df.iterrows()]
 
+# Bus selection
+bus_options = st.multiselect('Select buses', options=bus_data['bus_name'].unique(), default=bus_data['bus_name'].unique())
+bus_data = bus_data[bus_data['bus_name'].isin(bus_options)]
 
 with st.expander('Most Recent Positions Map'):
-    # Bus selection
-    bus_options = st.multiselect('Select buses', options=bus_data['bus_name'].unique(), default=bus_data['bus_name'].unique())
-    bus_data = bus_data[bus_data['bus_name'].isin(bus_options)]
-
-
+    
     if st.checkbox('Most Recent Positions'):
         # st.write(bus_data)
         st.dataframe(bus_data, use_container_width=True, hide_index=True)
