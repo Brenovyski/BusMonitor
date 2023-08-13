@@ -122,6 +122,13 @@ with st.expander('Historical Positions (per bus) Map'):
 
     if st.checkbox("Show historical positions map"):
         hist_map = folium.Map(location=[bus_stops[0][0], bus_stops[0][1]], zoom_start=14)
+
+        # Add bus stops to the map
+        for stop in bus_stops:
+            lat, lon, name = stop
+            folium.Marker([lat, lon], popup=name, icon=folium.Icon(color='blue', icon='bus', prefix='fa')).add_to(m)
+        
+        # Add historical postions of a selected bus
         for index, row in hist_bus_data.iterrows():
             if row['bus_name'] == hist_bus_option:
                 color = bus_colors.get(row['bus_name'], 'gray')  
