@@ -7,8 +7,8 @@ Need to create your own Database in postgres for development
 host = "database-1.c3pulzlhrdfe.us-east-1.rds.amazonaws.com"
 port = 5432
 dbname = "labredes"
-user = "postgres"
-password = "deadbeefpi"
+user = "<>"
+password = "<>"
 
 
 Development example
