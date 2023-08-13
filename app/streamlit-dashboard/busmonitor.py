@@ -2,7 +2,7 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 import folium
-import time
+from streamlit_autorefresh import st_autorefresh
 from streamlit_folium import folium_static
 
 st.title('BusMonitor: An Elegant Bus Monitoring System')
@@ -72,6 +72,4 @@ if st.checkbox('Show raw data'):
     st.subheader('Bus Stop Data')
     st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
 
-# Wait for a specific number of seconds (for real time update of bus location)
-time.sleep(30)
-st.experimental_rerun()
+st_autorefresh(interval=30000, limit=10_000_000, key="autorefresh")

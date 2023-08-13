@@ -2,3 +2,4 @@ streamlit
 psycopg2
 folium
 streamlit_folium
+streamlit_autorefresh
