@@ -126,7 +126,7 @@ with st.expander('Historical Positions (per bus) Map'):
         # Add bus stops to the map
         for stop in bus_stops:
             lat, lon, name = stop
-            folium.Marker([lat, lon], popup=name, icon=folium.Icon(color='blue', icon='bus', prefix='fa')).add_to(m)
+            folium.Marker([lat, lon], popup=name, icon=folium.Icon(color='blue', icon='bus', prefix='fa')).add_to(hist_map)
         
         # Add historical postions of a selected bus
         for index, row in hist_bus_data.iterrows():
