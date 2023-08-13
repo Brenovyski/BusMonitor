@@ -16,7 +16,7 @@ Development example
 
 # Checklist
 
-- [] Monitor the real-time position of buses using GPS data.
+- [X] Monitor the real-time position of buses using GPS data.
 - [] Calculate and display the average speed of the bus between specific points.
 - [] Check if the vehicle has been stopped for more than 5 minutes and generate an alert to the monitoring center.
 - [] Check if the bus is running late compared to the scheduled time and generate an alert if the delay is considered long.

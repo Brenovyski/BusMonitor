@@ -2,13 +2,10 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 import folium
+import time
 from streamlit_folium import folium_static
 
 st.title('BusMonitor: An Elegant Bus Monitoring System')
-
-# Read the CSV file
-bus_stops_df = pd.read_csv('stops.csv', header=None)
-bus_stops = [(row[3], row[4], row[1]) for index, row in bus_stops_df.iterrows()]
 
 # Initialize connection
 @st.cache_resource
@@ -24,7 +21,7 @@ def run_query(query):
         cur.execute(query)
         return cur.fetchall()
 
-bus_query = "SELECT timestamp as measurement_time, bus_id as bus_name, latitude, longitude FROM labredes.tracking.locations;"
+bus_query = "WITH RankedLocations AS (SELECT timestamp AS measurement_time, bus_id AS bus_name, latitude, longitude, ROW_NUMBER() OVER (PARTITION BY bus_id ORDER BY timestamp DESC) AS rn FROM labredes.tracking.locations) SELECT measurement_time, bus_name, latitude, longitude FROM RankedLocations WHERE rn = 1;"
 bus_rows = run_query(bus_query)
 bus_data = pd.DataFrame(bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
 bus_data['measurement_time'] = pd.to_datetime(bus_data['measurement_time'])
@@ -48,10 +45,14 @@ filtered_bus_data = bus_data[bus_data['measurement_date'] == selected_date]
 # Bus selection
 bus_options = st.multiselect('Select buses', options=filtered_bus_data['bus_name'].unique(), default=filtered_bus_data['bus_name'].unique())
 
-# Create a map with Stamen Toner tiles
-m = folium.Map(location=[bus_stops[0][0], bus_stops[0][1]], zoom_start=15)
+# Read the CSV file (for bus stops)
+bus_stops_df = pd.read_csv('stops.csv', header=None)
+bus_stops = [(row[3], row[4], row[1]) for index, row in bus_stops_df.iterrows()]
 
-# Add hardcoded bus stops to the map
+# Create a map 
+m = folium.Map(location=[bus_stops[0][0], bus_stops[0][1]], zoom_start=14)
+
+# Add bus stops to the map
 for stop in bus_stops:
     lat, lon, name = stop
     folium.Marker([lat, lon], popup=name, icon=folium.Icon(color='blue', icon='bus', prefix='fa')).add_to(m)
@@ -70,3 +71,7 @@ if st.checkbox('Show raw data'):
     st.write(filtered_bus_data)
     st.subheader('Bus Stop Data')
     st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
+
+# Wait for a specific number of seconds (for real time update of bus location)
+time.sleep(30)
+st.experimental_rerun()
