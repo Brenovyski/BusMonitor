@@ -37,7 +37,7 @@ bus_colors = {
 }
 
 # Bus selection
-bus_options = st.multiselect('Select buses', options=bus_colors.keys(), default=list(bus_colors.keys()))
+bus_options = st.multiselect('Select buses', options=bus_data.keys(), default=list(bus_data.keys()))
 
 # Read the CSV file (for bus stops)
 try:
@@ -67,18 +67,18 @@ for index, row in bus_data.iterrows():
 # Display the map in Streamlit
 folium_static(m)
 
-# Display bus names and their respective colors in a table
+st.subheader('Raw Data')
+
+# Show raw data
 if st.checkbox('Show bus color'):
-    st.subheader('Bus Color')
     colors_table = pd.DataFrame.from_dict(bus_colors, orient='index', columns=['Color']).reset_index()
     colors_table.columns = ['Bus Name', 'Color']
     st.write(colors_table)
 
-# Show raw data
-if st.checkbox('Show raw data'):
-    st.subheader('Bus Data')
+if st.checkbox('Show bus last position'):
     st.write(bus_data)
-    st.subheader('Bus Stop Data')
+
+if st.checkbox('Show bus stop data'):
     st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
 
 st_autorefresh(interval=30000, limit=10_000_000, key="autorefresh")
