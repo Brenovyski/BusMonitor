@@ -6,6 +6,10 @@ from streamlit_folium import folium_static
 
 st.title('BusMonitor: An Elegant Bus Monitoring System')
 
+# Read the CSV file
+bus_stops_df = pd.read_csv('stops.csv', header=None)
+bus_stops = [(row[3], row[4], row[1]) for index, row in bus_stops_df.iterrows()]
+
 # Initialize connection
 @st.cache_resource
 def init_connection():
@@ -20,40 +24,42 @@ def run_query(query):
         cur.execute(query)
         return cur.fetchall()
 
-# Load bus data into DataFrame
-bus_query = "SELECT longitude, latitude, measurement_time, bus_name FROM buses_table;"
+bus_query = "SELECT timestamp as measurement_time, bus_id as bus_name, latitude, longitude FROM labredes.tracking.locations;"
 bus_rows = run_query(bus_query)
-bus_data = pd.DataFrame(bus_rows, columns=['longitude', 'latitude', 'measurement_time', 'bus_name'])
+bus_data = pd.DataFrame(bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
 bus_data['measurement_time'] = pd.to_datetime(bus_data['measurement_time'])
 bus_data['measurement_date'] = bus_data['measurement_time'].dt.date
 
-# Load bus stops data into DataFrame
-stop_query = "SELECT stop_name, latitude, longitude FROM bus_stops;"
-stop_rows = run_query(stop_query)
-stop_data = pd.DataFrame(stop_rows, columns=['stop_name', 'latitude', 'longitude'])
+# Filter out any None or NaN values from the measurement_date column
+valid_dates = bus_data['measurement_date'].dropna()
 
-# Date filter
-min_date = bus_data['measurement_date'].min()
-max_date = bus_data['measurement_date'].max()
-date_filter = st.date_input('Select date range', min_value=min_date, max_value=max_date, value=(min_date, max_date))
+# If there are valid dates, use them to set the min and max values for the date input
+if not valid_dates.empty:
+    min_date = valid_dates.min()
+    max_date = valid_dates.max()
+    selected_date = st.date_input('Select date', min_value=min_date, max_value=max_date, value=min_date)
+else:
+    st.error("No valid dates found in the data.")
+    selected_date = None
 
-# Filter bus data using the selected date range
-filtered_bus_data = bus_data[(bus_data['measurement_date'] >= date_filter[0]) & (bus_data['measurement_date'] <= date_filter[1])]
+# Filter bus data using the selected date
+filtered_bus_data = bus_data[bus_data['measurement_date'] == selected_date]
 
 # Bus selection
-bus_options = st.multiselect('Select buses', options=bus_data['bus_name'].unique(), default=bus_data['bus_name'].unique())
-filtered_data = filtered_bus_data[filtered_bus_data['bus_name'].isin(bus_options)]
+bus_options = st.multiselect('Select buses', options=filtered_bus_data['bus_name'].unique(), default=filtered_bus_data['bus_name'].unique())
 
 # Create a map with Stamen Toner tiles
-m = folium.Map(location=[stop_data['latitude'].mean(), stop_data['longitude'].mean()], zoom_start=15)
+m = folium.Map(location=[bus_stops[0][0], bus_stops[0][1]], zoom_start=15)
 
-# Add bus stops to the map (blue markers)
-for index, row in stop_data.iterrows():
-    folium.Marker([row['latitude'], row['longitude']], popup=row['stop_name'], icon=folium.Icon(color='blue', icon='bus', prefix="fa")).add_to(m)
+# Add hardcoded bus stops to the map
+for stop in bus_stops:
+    lat, lon, name = stop
+    folium.Marker([lat, lon], popup=name, icon=folium.Icon(color='blue', icon='bus', prefix='fa')).add_to(m)
 
-# Add buses to the map (custom icon)
-for index, row in filtered_data.iterrows():
-    folium.Marker([row['latitude'], row['longitude']], popup=row['bus_name'], icon=folium.Icon(color='red', icon="location-pin", prefix="fa")).add_to(m)
+# Add buses to the map
+for index, row in filtered_bus_data.iterrows():
+    if row['bus_name'] in bus_options:
+        folium.Marker([row['latitude'], row['longitude']], popup=row['bus_name'], icon=folium.Icon(color='red', icon="location-pin", prefix="fa")).add_to(m)
 
 # Display the map in Streamlit
 folium_static(m)
@@ -61,6 +67,6 @@ folium_static(m)
 # Show raw data
 if st.checkbox('Show raw data'):
     st.subheader('Bus Data')
-    st.write(filtered_data)
+    st.write(filtered_bus_data)
     st.subheader('Bus Stop Data')
-    st.write(stop_data)
+    st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
