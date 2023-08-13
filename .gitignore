@@ -1,5 +1,4 @@
-app/streamlit-dashboard/.streamlit
-.streamlit
+*secrets.toml
 .venv
 .env
 
