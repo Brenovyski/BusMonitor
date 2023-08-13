@@ -74,12 +74,16 @@ def get_position(line_id):
 	}
 
 bus_names = {
-	2023: "8022-10-2023",
-	34791: "8022-10-34791"
+	2023: "8012-10-2023",
+	34791: "8012-10-34791",
+	2085: "8022-10-2085",
+	2545: "8032-10-2545",
+	34098: "702U-10-34098",
+	657: "701U-10-657",
 }
 while True:
 	print('----- START')
-	for position_id in [2023, 34791]:
+	for position_id in list(bus_names.keys()):
 		print(f"getting position for {position_id} ({datetime.datetime.now()})")
 		try:
 			position = get_position(position_id)
