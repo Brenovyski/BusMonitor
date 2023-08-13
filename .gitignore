@@ -6,3 +6,4 @@ app/streamlit-dashboard/.streamlit
 .DS_Store
 .vscode
 *.pyc
+__pycache__
