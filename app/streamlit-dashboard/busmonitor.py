@@ -37,7 +37,7 @@ bus_colors = {
 }
 
 # Bus selection
-bus_options = st.multiselect('Select buses', options=bus_data.keys(), default=list(bus_data.keys()))
+bus_options = st.multiselect('Select buses', options=bus_data['bus_name'].unique(), default=bus_data['bus_name'].unique())
 
 # Read the CSV file (for bus stops)
 try:
