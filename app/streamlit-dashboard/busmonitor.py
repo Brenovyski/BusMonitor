@@ -94,22 +94,38 @@ for index, row in bus_data.iterrows():
             icon=folium.DivIcon(html=f"<div style='color: {color};'>{row['bus_name']}</div>")
         ).add_to(m)
 
-# Display the map in Streamlit
-folium_static(m)
+with st.expander('Most Recent Positions Map'):
+    # Display the map in Streamlit
+    folium_static(m)
 
-st.subheader('Raw Data')
+with st.expander('Historical Positions (per bus)'):
+    hist_bus_option = st.selectbox('Select buses', options=bus_data['bus_name'].unique(), default=bus_data['bus_name'].unique())
+    hist_bus_query = f"WITH RankedLocations AS (SELECT timestamp AS measurement_time, bus_id AS bus_name, latitude, longitude, ROW_NUMBER() OVER (PARTITION BY bus_id ORDER BY timestamp DESC) AS rn FROM labredes.tracking.locations) SELECT measurement_time, bus_name, latitude, longitude FROM RankedLocations WHERE rn <= 5;"
+    hist_bus_rows = run_query(bus_query)
+    hist_bus_data = pd.DataFrame(hist_bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
+    hist_bus_data = hist_bus_data[hist_bus_data['bus_name'] == hist_bus_option]
+    hist_bus_data['measurement_time'] = pd.to_datetime(hist_bus_data['measurement_time'])
+    hist_bus_data = hist_bus_data.sort_values(['bus_name', 'measurement_time'])
+    hist_bus_data = hist_bus_data[hist_bus_data['bus_name'].isin(bus_options)]
+    if st.checkbox("Show data"):
+        st.dataframe(hist_bus_data, use_container_width=True, hide_index=True)
+    if st.checkbox("Show map"):
+        st.write("aqui brenão")
 
+    
 # Show raw data
-if st.checkbox('Show bus color'):
+with st.expander('Bus Colors'):
     colors_table = pd.DataFrame.from_dict(bus_colors, orient='index', columns=['Color']).reset_index()
     colors_table.columns = ['Bus Name', 'Color']
-    st.write(colors_table)
+    st.dataframe(colors_table, use_container_width=True, hide_index=True)
 
-if st.checkbox('Show bus last position'):
-    st.write(bus_data)
+with st.expander('Most Recent Positions'):
+    # st.write(bus_data)
+    st.dataframe(bus_data, use_container_width=True, hide_index=True)
 
-if st.checkbox('Show bus stop data'):
-    st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
+with st.expander('Bus Stops'):
+    # st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
+    st.dataframe(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']), use_container_width=True, hide_index=True)
 
 with st.expander('Past Positions, Average Speed and Distance Traveled'):
     st.write("Recent average speed and total distance traveled by each bus")
