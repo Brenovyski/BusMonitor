@@ -25,8 +25,19 @@ bus_query = "WITH RankedLocations AS (SELECT timestamp AS measurement_time, bus_
 bus_rows = run_query(bus_query)
 bus_data = pd.DataFrame(bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
 
+# Define colors for specific bus lines
+bus_colors = {
+    "CAIO-0001": "red",
+    "8012-10-2023": "purple",
+    "8012-10-34791": "green",
+    "8022-10-2085": "orange",
+    "8032-10-2545": "darkred",
+    "702U-10-34098": "darkblue",
+    "701U-10-657": "pink",
+}
+
 # Bus selection
-bus_options = st.multiselect('Select buses', options=bus_data['bus_name'].unique(), default=bus_data['bus_name'].unique())
+bus_options = st.multiselect('Select buses', options=bus_colors.keys(), default=list(bus_colors.keys()))
 
 # Read the CSV file (for bus stops)
 try:
@@ -46,10 +57,22 @@ for stop in bus_stops:
 # Add buses to the map
 for index, row in bus_data.iterrows():
     if row['bus_name'] in bus_options:
-        folium.Marker([row['latitude'], row['longitude']], popup=row['bus_name'], icon=folium.Icon(color='red', icon="location-pin", prefix="fa")).add_to(m)
+        color = bus_colors.get(row['bus_name'], 'gray')  # Use 'gray' for buses not in the defined list
+        folium.Marker([row['latitude'], row['longitude']], popup=row['bus_name'], icon=folium.Icon(color=color, icon="location-pin", prefix="fa")).add_to(m)
+        folium.map.Marker(
+            [row['latitude'], row['longitude']],
+            icon=folium.DivIcon(html=f"<div style='color: {color};'>{row['bus_name']}</div>")
+        ).add_to(m)
 
 # Display the map in Streamlit
 folium_static(m)
+
+# Display bus names and their respective colors in a table
+if st.checkbox('Show bus color'):
+    st.subheader('Bus Color')
+    colors_table = pd.DataFrame.from_dict(bus_colors, orient='index', columns=['Color']).reset_index()
+    colors_table.columns = ['Bus Name', 'Color']
+    st.write(colors_table)
 
 # Show raw data
 if st.checkbox('Show raw data'):
