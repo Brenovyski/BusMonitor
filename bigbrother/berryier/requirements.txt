@@ -1,0 +1,9 @@
+wheel
+requests
+pynmea2
+pyserial
+pandas
+sqlalchemy
+psycopg2-binary
+python-dotenv
+pytz

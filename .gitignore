@@ -1,1 +1,7 @@
 .streamlit
+.venv
+.env
+
+.DS_Store
+.vscode
+*.pyc
