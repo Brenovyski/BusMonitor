@@ -46,7 +46,10 @@ filtered_bus_data = bus_data[bus_data['measurement_date'] == selected_date]
 bus_options = st.multiselect('Select buses', options=filtered_bus_data['bus_name'].unique(), default=filtered_bus_data['bus_name'].unique())
 
 # Read the CSV file (for bus stops)
-bus_stops_df = pd.read_csv('stops.csv', header=None)
+try:
+    bus_stops_df = pd.read_csv('stops.csv', header=None)
+except:
+    bus_stops_df = pd.read_csv('app/streamlit-dashboard/stops.csv', header=None)
 bus_stops = [(row[3], row[4], row[1]) for index, row in bus_stops_df.iterrows()]
 
 # Create a map 
