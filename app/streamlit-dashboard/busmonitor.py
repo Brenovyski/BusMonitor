@@ -1,11 +1,40 @@
 import streamlit as st
 import psycopg2
 import pandas as pd
+from math import sin, cos, sqrt, atan2, radians
 import folium
 from streamlit_autorefresh import st_autorefresh
 from streamlit_folium import folium_static
 
 st.title('BusMonitor: An Elegant Bus Monitoring System')
+
+# Haversine formula to calculate the distance between two lat/long points
+def haversine(lon1, lat1, lon2, lat2):
+    R = 6371.0  # Radius of the Earth in kilometers
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
+
+def calculate_distance(group):
+    distance = 0
+    for i in range(1, len(group)):
+        lon1, lat1, lon2, lat2 = group.iloc[i-1]['longitude'], group.iloc[i-1]['latitude'], group.iloc[i]['longitude'], group.iloc[i]['latitude']
+        distance += haversine(lon1, lat1, lon2, lat2)
+    return distance
+
+def calculate_average_speed(group):
+    distance = 0
+    for i in range(1, len(group)):
+        lon1, lat1, lon2, lat2 = group.iloc[i-1]['longitude'], group.iloc[i-1]['latitude'], group.iloc[i]['longitude'], group.iloc[i]['latitude']
+        distance += haversine(lon1, lat1, lon2, lat2)
+
+    time_difference = (group.iloc[-1]['measurement_time'] - group.iloc[0]['measurement_time']).total_seconds() / 3600 # Difference in hours
+    if time_difference == 0:
+        return 0 # To avoid division by zero
+    return distance / time_difference
+
 
 # Initialize connection
 @st.cache_resource
@@ -38,6 +67,7 @@ bus_colors = {
 
 # Bus selection
 bus_options = st.multiselect('Select buses', options=bus_colors.keys(), default=list(bus_colors.keys()))
+bus_data = bus_data[bus_data['bus_name'].isin(bus_options)]
 
 # Read the CSV file (for bus stops)
 try:
@@ -80,5 +110,26 @@ if st.checkbox('Show raw data'):
     st.write(bus_data)
     st.subheader('Bus Stop Data')
     st.write(pd.DataFrame(bus_stops, columns=['latitude', 'longitude', 'stop_name']))
+
+with st.expander('Past Positions, Average Speed and Distance Traveled'):
+    st.write("Recent average speed and total distance traveled by each bus")
+    number_of_records = st.number_input('Use last N records to compute speed and distance: ', min_value=1, max_value=100, value=10, step=1)
+    bus_query = f"WITH RankedLocations AS (SELECT timestamp AS measurement_time, bus_id AS bus_name, latitude, longitude, ROW_NUMBER() OVER (PARTITION BY bus_id ORDER BY timestamp DESC) AS rn FROM labredes.tracking.locations) SELECT measurement_time, bus_name, latitude, longitude FROM RankedLocations WHERE rn <= {number_of_records};"
+    bus_rows = run_query(bus_query)
+    bus_data = pd.DataFrame(bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
+    bus_data['measurement_time'] = pd.to_datetime(bus_data['measurement_time'])
+    bus_data = bus_data.sort_values(['bus_name', 'measurement_time'])
+    bus_data = bus_data[bus_data['bus_name'].isin(bus_options)]
+
+    if st.checkbox('Show past positions'):
+        st.dataframe(bus_data, use_container_width=True, hide_index=True)
+    
+    average_speeds = bus_data.groupby('bus_name').apply(calculate_average_speed).reset_index(name='average_speed')
+    total_distances = bus_data.groupby('bus_name').apply(calculate_distance).reset_index(name='total_distance')
+
+    # Merging the two dataframes
+    merged_data = pd.merge(average_speeds, total_distances, on='bus_name')
+    st.write("Distance Traveled (km) and Average Speeds (km/h):")
+    st.dataframe(merged_data, use_container_width=True, hide_index=True)
 
 st_autorefresh(interval=30000, limit=10_000_000, key="autorefresh")
