@@ -51,7 +51,10 @@ while True:
 	ser=serial.Serial(port, baudrate=9600, timeout=0.5)
 	dataout = pynmea2.NMEAStreamReader()
 	newdata=ser.readline()
-	newdata = newdata.decode('utf-8')
+	try:
+		newdata = newdata.decode('utf-8')
+	except Exception as e:
+		print(f"error trying to decode data {e}")
 
 	if newdata[0:6] == "$GPRMC":
 		newmsg=pynmea2.parse(newdata)
@@ -81,6 +84,6 @@ while True:
 			method=postgres_upsert("pk_locations")
 		)
 
-		sleepsec = 30
+		sleepsec = 10
 		print(f"Sleeping for {sleepsec} seconds...")
 		time.sleep(sleepsec)

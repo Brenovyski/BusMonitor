@@ -116,7 +116,7 @@ with st.expander('Most Recent Positions Map'):
 with st.expander('Historical Positions (per bus) Map'):
     hist_bus_option = st.selectbox('Select buses', options=bus_data['bus_name'].unique(), index=0)
     hist_bus_query = f"WITH RankedLocations AS (SELECT timestamp AS measurement_time, bus_id AS bus_name, latitude, longitude, ROW_NUMBER() OVER (PARTITION BY bus_id ORDER BY timestamp DESC) AS rn FROM labredes.tracking.locations) SELECT measurement_time, bus_name, latitude, longitude FROM RankedLocations WHERE rn <= 5;"
-    hist_bus_rows = run_query(bus_query)
+    hist_bus_rows = run_query(hist_bus_query)
     hist_bus_data = pd.DataFrame(hist_bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
     hist_bus_data = hist_bus_data[hist_bus_data['bus_name'] == hist_bus_option]
     hist_bus_data['measurement_time'] = pd.to_datetime(hist_bus_data['measurement_time'])
