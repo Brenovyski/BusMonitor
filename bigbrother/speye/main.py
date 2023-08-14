@@ -83,28 +83,39 @@ bus_names = {
 }
 while True:
 	print('----- START')
+	positions = []
 	for position_id in list(bus_names.keys()):
+		print(" -- > ")
 		print(f"getting position for {position_id} ({datetime.datetime.now()})")
 		try:
 			position = get_position(position_id)
 			print(position)
 				
-			df = pd.DataFrame([position])
-			df['bus_id'] = bus_names[position_id]
+			position['bus_id'] = bus_names[position_id]
+			positions.append(position)
 
 			# df = pd.read_sql_table(POSTGRES_TABLE, engine, schema=POSTGRES_SCHEMA)
 
-			df.to_sql(
-				POSTGRES_TABLE, 
-				engine, 
-				if_exists='append', 
-				index=False, 
-				schema=POSTGRES_SCHEMA, 
-				method=postgres_upsert("pk_locations")
-			)
 		except Exception as e:
-			print("error:", e)
+			print(f"error fetching position {position_id}:", e)
 			continue
-		time.sleep(10)
+		time.sleep(5)
+		print(" < -- ")
+	
+	try:
+		df = pd.DataFrame(positions)
+
+		df.to_sql(
+			POSTGRES_TABLE, 
+			engine, 
+			if_exists='append', 
+			index=False, 
+			schema=POSTGRES_SCHEMA, 
+			method=postgres_upsert("pk_locations")
+		)
+	except Exception as e:
+		print("error in .to_sql():", e)
+		continue
+		
 	print('----- END (sleeping...)')
 	time.sleep(60)
