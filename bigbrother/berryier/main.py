@@ -84,6 +84,6 @@ while True:
 			method=postgres_upsert("pk_locations")
 		)
 
-		sleepsec = 30
+		sleepsec = 10
 		print(f"Sleeping for {sleepsec} seconds...")
 		time.sleep(sleepsec)
