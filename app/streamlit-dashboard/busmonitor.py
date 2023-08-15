@@ -43,7 +43,7 @@ def init_connection():
 conn = init_connection()
 
 # Perform query
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5)
 def run_query(query):
     with conn.cursor() as cur:
         cur.execute(query)
@@ -169,4 +169,4 @@ with st.expander('Past Positions, Average Speed and Distance Traveled'):
     st.write("Distance Traveled (km) and Average Speeds (km/h):")
     st.dataframe(merged_data, use_container_width=True, hide_index=True)
 
-st_autorefresh(interval=30000, limit=10_000_000, key="autorefresh")
+st_autorefresh(interval=15000, limit=10_000_000, key="autorefresh")

@@ -118,4 +118,4 @@ while True:
 		continue
 		
 	print('----- END (sleeping...)')
-	time.sleep(60)
+	time.sleep(5)
