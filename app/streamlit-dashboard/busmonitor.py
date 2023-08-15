@@ -6,6 +6,12 @@ import folium
 from streamlit_autorefresh import st_autorefresh
 from streamlit_folium import folium_static
 
+st.set_page_config(
+    page_title="BusMonitor",
+    page_icon="🚌",
+    initial_sidebar_state="collapsed",
+)
+
 st.title('BusMonitor: An Elegant Bus Monitoring System')
 
 # Haversine formula to calculate the distance between two lat/long points
