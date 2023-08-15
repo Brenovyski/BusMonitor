@@ -115,7 +115,7 @@ with st.expander('Most Recent Positions Map'):
 
 with st.expander('Historical Positions (per bus) Map'):
     hist_bus_option = st.selectbox('Select buses', options=bus_data['bus_name'].unique(), index=0)
-    hist_number_of_records = st.number_input('Use last N records to compute speed and distance: ', min_value=1, max_value=100, value=10, step=1)
+    hist_number_of_records = st.number_input('Use the last N records to compute speed and distance: ', min_value=1, max_value=100, value=10, step=1)
     hist_bus_query = f"WITH RankedLocations AS (SELECT timestamp AS measurement_time, bus_id AS bus_name, latitude, longitude, ROW_NUMBER() OVER (PARTITION BY bus_id ORDER BY timestamp DESC) AS rn FROM labredes.tracking.locations) SELECT measurement_time, bus_name, latitude, longitude FROM RankedLocations WHERE rn <= {hist_number_of_records};"
     hist_bus_rows = run_query(hist_bus_query)
     hist_bus_data = pd.DataFrame(hist_bus_rows, columns=['measurement_time', 'bus_name', 'latitude', 'longitude'])
